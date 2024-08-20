@@ -157,8 +157,6 @@ class CRM_Xcm_Form_Settings extends CRM_Core_Form {
                       'fill_details',
                       E::ts('Fill Details'),
                       [
-                        'email' => E::ts('Email'),
-                        'phone' => E::ts('Phone'),
                         'website' => E::ts('Website'),
                       ],
                       [
@@ -178,7 +176,34 @@ class CRM_Xcm_Form_Settings extends CRM_Core_Form {
                         1 => E::ts('If contact has no address'),
                         2 => E::ts('If contact has no address of that type'),
                       ],
-                      ['class' => 'crm-select2 huge']);
+                      ['class' => 'crm-select2 huge']
+                    );
+
+    $this->addElement(
+      'select',
+      'fill_email',
+      E::ts('Fill Email'),
+      [
+        0 => E::ts('Never'),
+        1 => E::ts('If contact has no email'),
+        2 => E::ts('If contact has no email of that type'),
+        3 => E::ts('If contact has not this email address'),
+      ],
+      ['class' => 'crm-select2 huge']
+    );
+
+    $this->addElement(
+      'select',
+      'fill_phone',
+      E::ts('Fill Phone'),
+      [
+        0 => E::ts('Never'),
+        1 => E::ts('If contact has no phone'),
+        2 => E::ts('If contact has no phone of that type'),
+        3 => E::ts('If contact has not this phone number'),
+      ],
+      ['class' => 'crm-select2 huge']
+    );
 
     // diff activity options
     $this->addElement('select',
@@ -380,6 +405,8 @@ class CRM_Xcm_Form_Settings extends CRM_Core_Form {
     // store options
     $options = [
       'fill_address' => $values['fill_address'] ?? NULL,
+      'fill_email' => $values['fill_email'] ?? NULL,
+      'fill_phone' => $values['fill_phone'] ?? NULL,
       'fill_fields_multivalue' => $values['fill_fields_multivalue'] ?? NULL,
       'fill_details' => $values['fill_details'] ?? NULL,
       'fill_details_primary' => $values['fill_details_primary'] ?? NULL,
