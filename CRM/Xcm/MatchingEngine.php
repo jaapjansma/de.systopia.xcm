@@ -409,21 +409,56 @@ class CRM_Xcm_MatchingEngine {
       // FILL CURRENT CONTACT DETAILS
       if (!empty($options['fill_details']) && is_array($options['fill_details'])) {
         foreach ($options['fill_details'] as $entity) {
-          $this->addDetailToContact($result['contact_id'], $entity, $submitted_contact_data, !empty($options['fill_details_primary']), $current_contact_data);
+          $this->addDetailToContact(
+            $result['contact_id'],
+            $entity,
+            $submitted_contact_data,
+            !empty($options['fill_details_primary']),
+            $current_contact_data
+          );
         }
       }
 
       if (!empty($options['fill_email'])) {
-        $this->addEmailToContact($result['contact_id'], $submitted_contact_data, !empty($options['fill_details_primary']), $current_contact_data, $options['fill_email']);
+        $this->addEmailToContact(
+          $result['contact_id'],
+          $submitted_contact_data,
+          !empty($options['fill_details_primary']),
+          $current_contact_data,
+          $options['fill_email']
+        );
       }
 
       if (!empty($options['fill_phone'])) {
-        $this->addPhoneToContact($result['contact_id'], $submitted_contact_data, 'phone', $this->config->primaryPhoneType(), !empty($options['fill_details_primary']), $current_contact_data, $options['fill_phone']);
+        $this->addPhoneToContact(
+          $result['contact_id'],
+          $submitted_contact_data,
+          'phone',
+          $this->config->primaryPhoneType(),
+          !empty($options['fill_details_primary']),
+          $current_contact_data,
+          $options['fill_phone']
+        );
         if ($this->config->secondaryPhoneType()) {
-          $this->addPhoneToContact($result['contact_id'], $submitted_contact_data, 'phone2', $this->config->secondaryPhoneType(), FALSE, $current_contact_data, $options['fill_phone']);
+          $this->addPhoneToContact(
+            $result['contact_id'],
+            $submitted_contact_data,
+            'phone2',
+            $this->config->secondaryPhoneType(),
+            FALSE,
+            $current_contact_data,
+            $options['fill_phone']
+          );
         }
         if ($this->config->tertiaryPhoneType()) {
-          $this->addPhoneToContact($result['contact_id'], $submitted_contact_data, 'phone3', $this->config->tertiaryPhoneType(), FALSE, $current_contact_data);
+          $this->addPhoneToContact(
+            $result['contact_id'],
+            $submitted_contact_data,
+            'phone3',
+            $this->config->tertiaryPhoneType(),
+            FALSE,
+            $current_contact_data
+          );
         }
       }
 
@@ -612,13 +647,16 @@ class CRM_Xcm_MatchingEngine {
       // sort out location type
       if (empty($data['location_type_id'])) {
         $location_type_id = $this->config->defaultLocationType();
-      } else {
+      }
+      else {
         $location_type_id = $data['location_type_id'];
       }
 
       // get attribute
-      $attribute = strtolower($entity); // for email and phone that works
+      // for email and phone that works
+      $attribute = strtolower($entity);
       $sorting = 'is_primary desc';
+      $create_detail_call = [];
       if (strtolower($entity) == 'website') {
         $create_detail_call['website_type_id'] = $data['website_type_id'] ?? $this->config->defaultWebsiteType();
         $sorting = 'id desc';
@@ -641,10 +679,11 @@ class CRM_Xcm_MatchingEngine {
       ]);
       if (empty($existing_entity['count'])) {
         // there is none -> create
-        $create_detail_call = array(
+        $create_detail_call = [
           $attribute         => $data[$entity],
           'contact_id'       => $contact_id,
-          'location_type_id' => $location_type_id);
+          'location_type_id' => $location_type_id,
+        ];
 
         // mark as primary if requested
         if ($as_primary) {
@@ -687,18 +726,25 @@ class CRM_Xcm_MatchingEngine {
    * @param int $contact_id
    * @param array $data
    *   Submitted data.
-   * @param $as_primary
+   * @param bool $as_primary
    *  Mark the email as primary
-   * @param $data_update
+   * @param array $data_update
    *  The current contact data
    * @param int $fillOption
    *  Either 0: do nothing
    *         1: Fill if contact has no email
    *         2: Fill if contact has no email of this type
    *         3: Fill if contact has not this email address
-   * @throws \CiviCRM_API3_Exception
+   *
+   * @throws \CRM_Core_Exception
    */
-  protected function addEmailToContact($contact_id, &$data, $as_primary = FALSE, &$data_update = NULL, $fillOption=3) {
+  protected function addEmailToContact(
+    $contact_id,
+    &$data,
+    $as_primary = FALSE,
+    &$data_update = NULL,
+    $fillOption = 3
+  ) {
     if (empty($fillOption)) {
       return;
     }
@@ -706,7 +752,8 @@ class CRM_Xcm_MatchingEngine {
       // sort out location type
       if (empty($data['location_type_id'])) {
         $location_type_id = $this->config->defaultLocationType();
-      } else {
+      }
+      else {
         $location_type_id = $data['location_type_id'];
       }
 
@@ -715,12 +762,13 @@ class CRM_Xcm_MatchingEngine {
         'contact_id'   => $contact_id,
         'options' => [
           'sort'  => 'is_primary desc',
-          'limit' => 1
-        ]
+          'limit' => 1,
+        ],
       ];
       if ($fillOption == 3) {
         $api_query['email'] = $data['email'];
-      } elseif ($fillOption == 2) {
+      }
+      elseif ($fillOption == 2) {
         $api_query['location_type_id'] = $location_type_id;
       }
 
@@ -728,10 +776,11 @@ class CRM_Xcm_MatchingEngine {
       $existing_entity = civicrm_api3('Email', 'get', $api_query);
       if (empty($existing_entity['count'])) {
         // there is none -> create
-        $create_detail_call = array(
+        $create_detail_call = [
           'email'         => $data['email'],
           'contact_id'       => $contact_id,
-          'location_type_id' => $location_type_id);
+          'location_type_id' => $location_type_id,
+        ];
 
         // mark as primary if requested
         if ($as_primary) {
@@ -745,7 +794,8 @@ class CRM_Xcm_MatchingEngine {
         if ($data_update && is_array($data_update)) {
           $data_update['email'] = $data['email'];
         }
-      } else {
+      }
+      else {
         // there already is a detail withe same value...
         if ($as_primary) {
           // ...and config says it should be primary -> make it sure it's primary:
@@ -773,15 +823,21 @@ class CRM_Xcm_MatchingEngine {
    *         1: Fill if contact has no phone
    *         2: Fill if contact has no phone of this type
    *         3: Fill if contact has not this phone number
-   * @throws \CiviCRM_API3_Exception
+   * @throws \CRM_Core_Exception
    */
+  // phpcs:ignore Generic.Metrics.CyclomaticComplexity.TooHigh
   protected function addPhoneToContact($contact_id,
     &$data,
     $attribute = 'phone',
     $phone_type_id = NULL,
     $as_primary = FALSE,
-    &$data_update = NULL
+    &$data_update = NULL,
+    $fillOption = 3,
   ) {
+
+    if (empty($fillOption)) {
+      return;
+    }
     if (!empty($data[$attribute])) {
       // sort out location type
       if (empty($data['location_type_id'])) {
@@ -800,14 +856,16 @@ class CRM_Xcm_MatchingEngine {
           'limit' => 1,
         ],
       ];
-      if ($fillOption == 3) {
+      if (3 === $fillOption) {
         $phoneNumeric = preg_replace('/[^\d%]/', '', $data[$attribute]);
-        if ($phoneNumeric) {
+        if (!empty($phoneNumeric)) {
           $api_query['phone_numeric'] = $phoneNumeric;
-        } else {
+        }
+        else {
           $api_query['phone'] = $data[$attribute];
         }
-      } elseif ($fillOption == 2) {
+      }
+      elseif (2 === $fillOption) {
         $api_query['location_type_id'] = $location_type_id;
         if ($phone_type_id) {
           $api_query['phone_type_id'] = $phone_type_id;
@@ -1489,7 +1547,7 @@ class CRM_Xcm_MatchingEngine {
       $submitted_value = $submitted_values[$data_attribute] ?? '';
 
       // mitigate api quirk: sometimes a single value is returned as a 1-array
-      if (is_array($original_value) && count($original_value) == 1 && is_string($submitted_value)) {
+      if (is_array($original_value) && count($original_value) === 1 && is_string($submitted_value)) {
         $original_value = reset($original_value);
       }
 
